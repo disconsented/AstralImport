@@ -5,7 +5,7 @@ from compendium_item import CompendiumItem
 class ItemParser(Plugin):
 
     def __init__(self):
-        super().__init__("item", "Items2")
+        super().__init__("item", "Items")
 
     def parse(self, data):
         output = []
@@ -20,21 +20,26 @@ class ItemParser(Plugin):
             if item.get("wondrous", None) is not None:
                 byline += "Wondrous-item, "
 
-            if item.get("armor", None) is not None:
-                item_type = item["type"]
-                # Armour
-                byline += "Armour ({}), ".format(item_type)
+            if item.get("weaponCategory", None) is not None:
+                byline += item["weaponCategory"] + " "
 
             if item.get("type", None) is not None:
                 item_type = item["type"]
-                if "$" in item_type:
-                    # byline += "*{}* ".format(item_type)
-                    continue
+                byline += self.get_property(item_type, False)
+
+            if item.get("property", None) is not None:
+                for prop in item.get("property"):
+                    byline += ", {}".format(self.get_property(prop, True))
+
+            if item.get("armor", None) is not None:
+                item_type = item["type"]
+                # Armour
+                byline += "AC:{}".format(item["ac"])
 
             if item.get("rarity", None) is not None:
                 rarity = item["rarity"]
                 if "None" not in rarity:
-                    byline += rarity
+                    byline += " {}".format(rarity)
 
             if item.get("reqAttune", None) is not None:
                 attunement = item["reqAttune"]
@@ -44,15 +49,32 @@ class ItemParser(Plugin):
             if item.get("value", None) is not None:
                 byline += item["value"]
 
+            if item.get("weight", None) is not None:
+                byline += " {} lbs".format(item["weight"])
+
             lines += ("# {}".format(item["name"]))
             lines += self.new_line
             lines += byline+"*"
-            lines += self.new_line
+            lines += self.double_line
             # Entries
             entries = item.get("entries", None)
             if entries is not None:
-                self.handle_entries(entries, lines)
+                lines = self.handle_entries(entries, lines)
+            # Additional Entries
+            adt_entries = item.get("additionalEntries", None)
+            if adt_entries is not None:
+                lines = self.handle_entries(adt_entries, lines)
             lines += self.new_line
+
+            if item.get("source", None) is not None:
+                source = item["source"]
+                page = item["page"]
+                lines += "{}*{} page: {}*".format(self.double_line, source, page)
+
+            if item.get("additionalSources", None) is not None:
+                for source in item.get("additionalSources"):
+                    lines += "*, {} page:{}*".format(source['source'], source['page'])
+
             output.append(CompendiumItem(item['name'], lines))
         return output
 
@@ -70,6 +92,8 @@ class ItemParser(Plugin):
                                                                      self.new_line]):
                         lines += self.new_line
                     # lines += .format(self.new_line, line["caption"], self.new_line))
+                    lines += self.new_line
+                    lines += self.new_line
                     # Spacing
                     lines += "|{}|{}".format('|'.join(line["colLabels"]), self.new_line)
                     # Rows
@@ -78,7 +102,7 @@ class ItemParser(Plugin):
                         lines += "|{}|{}".format('|'.join(row), self.new_line)
                 elif line_type == "entries":
                     # Super annoying special case, used for curses
-                    lines += "{}**{}.** ".format(self.new_line, line["name"])
+                    lines += "{}{}**{}.** ".format(self.new_line, self.new_line, line["name"])
                     for entry in line["entries"]:
                         if type(entry) == str:
                             lines += entry
@@ -87,4 +111,4 @@ class ItemParser(Plugin):
 
             else:
                 lines += line
-
+        return lines
