@@ -77,38 +77,3 @@ class ItemParser(Plugin):
 
             output.append(CompendiumItem(item['name'], lines))
         return output
-
-    def handle_entries(self, entries, lines):
-        for line in entries:
-            # Handle tables
-            if type(line) == dict:
-                line_type = line["type"]
-                if line_type == "list":
-                    for list_item in line["items"]:
-                        lines += "- {}{}".format(list_item, self.new_line)
-                elif line_type == "table":
-                    # Caption
-                    if not self.format_if_not_none("{}{}{}", lines, [self.new_line, line.get("caption", None),
-                                                                     self.new_line]):
-                        lines += self.new_line
-                    # lines += .format(self.new_line, line["caption"], self.new_line))
-                    lines += self.new_line
-                    lines += self.new_line
-                    # Spacing
-                    lines += "|{}|{}".format('|'.join(line["colLabels"]), self.new_line)
-                    # Rows
-                    lines += "|{}|{}".format("|".join((['-'] * len(line["colLabels"]))), self.new_line)
-                    for row in line["rows"]:
-                        lines += "|{}|{}".format('|'.join(row), self.new_line)
-                elif line_type == "entries":
-                    # Super annoying special case, used for curses
-                    lines += "{}{}**{}.** ".format(self.new_line, self.new_line, line["name"])
-                    for entry in line["entries"]:
-                        if type(entry) == str:
-                            lines += entry
-                        else:
-                            self.handle_entries(entry, lines)
-
-            else:
-                lines += line
-        return lines

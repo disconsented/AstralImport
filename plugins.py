@@ -14,12 +14,63 @@ class Plugin:
     def parse(self, data):
         raise NotImplementedError
 
+    def handle_entries(self, entries, lines):
+        for line in entries:
+            # Handle tables
+            if type(line) == dict:
+                line_type = line["type"]
+                if line_type == "list":
+                    for list_item in line["items"]:
+                        lines += "- {}{}".format(list_item, self.new_line)
+                elif line_type == "table":
+                    # Caption
+                    if not self.format_if_not_none("{}{}{}", lines, [self.new_line, line.get("caption", None),
+                                                                     self.new_line]):
+                        lines += self.new_line
+                    # lines += .format(self.new_line, line["caption"], self.new_line))
+                    lines += self.new_line
+                    lines += self.new_line
+                    # Spacing
+                    lines += "|{}|{}".format('|'.join(line["colLabels"]), self.new_line)
+                    # Rows
+                    lines += "|{}|{}".format("|".join((['-'] * len(line["colLabels"]))), self.new_line)
+                    for row in line["rows"]:
+                        lines += "|{}|{}".format('|'.join(row), self.new_line)
+                elif line_type == "entries":
+                    # Super annoying special case, used for curses
+                    lines += "{}{}**{}.** ".format(self.new_line, self.new_line, line["name"])
+                    for entry in line["entries"]:
+                        if type(entry) == str:
+                            lines += entry
+                        else:
+                            self.handle_entries(entry, lines)
+
+            else:
+                lines += line
+                lines += self.new_line
+        return lines
+
     @staticmethod
     def format_if_not_none(string, lines, attrs):
         if None not in attrs:
             lines += string.format(*attrs)
             return True
         return False
+
+    @staticmethod
+    def get_ability(ability):
+        if "int" == ability:
+            return "Intelligence"
+        elif "cha" == ability:
+            return "Charisma"
+        elif "wis" == ability:
+            return "Wisdom"
+        elif "str" == ability:
+            return "Strength"
+        elif "dex" == ability:
+            return "Dexterity"
+        elif "con" == ability:
+            return "Constitution"
 
     @staticmethod
     def get_property(i_type, is_property):
@@ -99,4 +150,6 @@ class Plugin:
             print("Unknown type : " + i_type)
             byline += i_type
         return byline + " "
+
+
 

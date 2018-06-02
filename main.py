@@ -166,7 +166,7 @@ def load_plugin(path, plugins):
     class_ = get_subclass(module, Plugin)()
     plugins[class_.name] = class_
 
-    print(getattr(plugin_module, "ItemParser"))
+    # print(getattr(plugin_module, "ItemParser"))
     print("Loaded plugin: {}".format(module_name))
 
 
