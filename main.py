@@ -7,6 +7,7 @@ import importlib.util
 import pyrebase
 from plugins import Plugin
 from tqdm import tqdm
+import pprint
 
 
 @click.command()
@@ -15,7 +16,9 @@ from tqdm import tqdm
 @click.argument('email')
 @click.argument('api_key')
 @click.argument('compendium_name')
-def main(input_file, password, email, api_key, compendium_name):
+@click.option('--upload', default=True, type=bool)
+def main(input_file, password, email, api_key, compendium_name, upload):
+    pretty_print = pprint.PrettyPrinter(indent=4)
     plugins = {}
     # load plugins
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -64,10 +67,13 @@ def main(input_file, password, email, api_key, compendium_name):
     joined_key = "{}/{}".format(local_id, compendium_id)
     response = db.child("/compendium_items").get()
     for item in response.each():
-        if item.val()['id'] in joined_key:
-            exsisting_items.__getitem__(item.val()["parent_category"]).append(item)
-            # print(item.key() + " | " + item.val()['id'] + " | " + item.val()["parent_category"])
-
+        try:
+            if item.val()['id'] in joined_key:
+                exsisting_items.__getitem__(item.val()["parent_category"]).append(item)
+                # print(item.key() + " | " + item.val()['id'] + " | " + item.val()["parent_category"])
+        except KeyError:
+            print("Item without a key detected")
+            pretty_print.pprint(item.val())
 # Find files
     files = []
     if os.path.isdir(input_file):
@@ -86,6 +92,8 @@ def main(input_file, password, email, api_key, compendium_name):
 
                 # No category
                 parsed = parser.parse(entity[1])
+                if upload is False:
+                    continue
                 if not categories.get(parser.category_name, None):
                     # Create new category, wont be any new children
                     new_category = db.child("/compendiums").child(local_id).child(compendium_id).child("categories").\
@@ -109,7 +117,7 @@ def main(input_file, password, email, api_key, compendium_name):
                     for item in tqdm(parsed, desc="Updating items"):
                         success = False
                         for existing_item in category_items:
-                            if item.title in existing_item.val()["title"]:
+                            if item.title == existing_item.val()["title"]:
                                 item.metadata = {"drop": {"game": [{"handout": {"compendium_item": existing_item.key()},
                                                                     "type": "handout"}]}}
                                 item.id = existing_item.val()["id"]

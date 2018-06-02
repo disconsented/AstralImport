@@ -25,9 +25,13 @@ class Plugin:
     def get_property(i_type, is_property):
         byline = ""
         if "A" == i_type:
-            byline += "Ammo"
+            byline += "Ammunition"
         elif "AT" == i_type:
-            byline += "Art==ans Tools"
+            byline += "Artisans Tools"
+        elif "AF" == i_type:
+            byline += "Ammunition"
+        elif "BF" == i_type:
+            byline += "Burst Fire"
         elif "EXP" == i_type:
             byline += "Explosive"
         elif "F" == i_type:
@@ -46,6 +50,8 @@ class Plugin:
             byline += "Light"
         elif "LA" == i_type:
             byline += "Light Armour"
+        elif "LD" == i_type:
+            byline += "Loading"
         elif "M" == i_type:
             byline += "Melee Weapon"
         elif "MA" == i_type:
@@ -60,6 +66,8 @@ class Plugin:
             byline += "Rod"
         elif "RG" == i_type:
             byline += "Ring"
+        elif "RLD" == i_type:
+            byline += "Reload"
         elif "S" == i_type:
             byline += "Shield"
         elif "SC" == i_type:
